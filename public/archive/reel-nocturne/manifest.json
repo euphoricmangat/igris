@@ -1,0 +1,27 @@
+{
+  "accession": "IGR.REEL.002",
+  "title": "Nocturne Cut",
+  "kind": "filmstrip",
+  "frames": [
+    "frame-00.png",
+    "frame-01.png",
+    "frame-02.png",
+    "frame-03.png",
+    "frame-04.png",
+    "frame-05.png",
+    "frame-06.png",
+    "frame-07.png",
+    "frame-08.png",
+    "frame-09.png",
+    "frame-10.png",
+    "frame-11.png",
+    "frame-12.png",
+    "frame-13.png",
+    "frame-14.png",
+    "frame-15.png",
+    "frame-16.png",
+    "frame-17.png"
+  ],
+  "width": 960,
+  "height": 720
+}

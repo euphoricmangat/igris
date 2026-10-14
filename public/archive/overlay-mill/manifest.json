@@ -1,0 +1,13 @@
+{
+  "accession": "IGR.OVL.001",
+  "title": "Mill Room",
+  "kind": "layers",
+  "frames": [
+    "frame-00.png",
+    "frame-01.png",
+    "frame-02.png",
+    "frame-03.png"
+  ],
+  "width": 960,
+  "height": 720
+}

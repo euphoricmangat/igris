@@ -1,0 +1,11 @@
+{
+  "generated_by": "tools/atelier/generate_plates.py",
+  "sets": [
+    "reel-sprocket-01",
+    "reel-nocturne",
+    "reel-ember",
+    "overlay-mill",
+    "overlay-halide",
+    "overlay-cinder"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "accession": "IGR.OVL.003",
+  "title": "Cinder Press",
+  "kind": "layers",
+  "frames": [
+    "frame-00.png",
+    "frame-01.png",
+    "frame-02.png",
+    "frame-03.png",
+    "frame-04.png"
+  ],
+  "width": 960,
+  "height": 720
+}
