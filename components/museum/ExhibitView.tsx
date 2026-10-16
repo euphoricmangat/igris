@@ -3,6 +3,7 @@
 import type { Exhibit } from "@/lib/museum/types";
 import { ExhibitFullscreen } from "./ExhibitFullscreen";
 import { InteractHint } from "./InteractHint";
+import { ModePlaque } from "./ModePlaque";
 
 export function ExhibitView({ exhibit }: { exhibit: Exhibit }) {
   return <ExhibitFullscreen exhibit={exhibit} />;
@@ -10,5 +11,10 @@ export function ExhibitView({ exhibit }: { exhibit: Exhibit }) {
 
 /** Hint shown below the stage frame on exhibit pages. */
 export function ExhibitInteractChrome({ exhibit }: { exhibit: Exhibit }) {
-  return <InteractHint engine={exhibit.engine} />;
+  return (
+    <>
+      <InteractHint engine={exhibit.engine} />
+      <ModePlaque engine={exhibit.engine} />
+    </>
+  );
 }

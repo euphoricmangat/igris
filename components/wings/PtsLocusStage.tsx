@@ -2,9 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { CanvasSpace, Pt, Group, Create, Circle } from "pts";
+import { qualityScale } from "@/lib/museum/qualityScale";
 
-export function PtsLocusStage() {
+export function PtsLocusStage({ expanded = false }: { expanded?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
   useEffect(() => {
     const el = host.current;
@@ -20,14 +23,19 @@ export function PtsLocusStage() {
     let wellActive = false;
     let well = new Pt(0, 0);
     let pointerDownAt: Pt | null = null;
+    let t = 0;
 
     space.add({
       start: () => {
-        pts = Create.distributeRandom(space.innerBound, 90);
+        const n = qualityScale(expandedRef.current, 90, 140);
+        pts = Create.distributeRandom(space.innerBound, n);
       },
       animate: () => {
-        form.fillOnly("#0e0e10").rect(space.innerBound);
+        t += 0.016;
+        // Soft trail instead of hard clear
+        form.fillOnly("rgba(14,14,16,0.22)").rect(space.innerBound);
         const pointer = space.pointer;
+        const linkDist = qualityScale(expandedRef.current, 90, 110);
 
         if (wellActive) {
           well = pointer;
@@ -51,7 +59,7 @@ export function PtsLocusStage() {
           for (let j = i + 1; j < near.length; j++) {
             const a = near[i];
             const b = near[j];
-            if (a.p.$subtract(b.p).magnitude() < 90) {
+            if (a.p.$subtract(b.p).magnitude() < linkDist) {
               form.line(new Group(a.p, b.p));
             }
           }
@@ -65,8 +73,12 @@ export function PtsLocusStage() {
           }
         });
 
-        pts.forEach((p) => {
-          p.add(new Pt((Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.35));
+        // Quiet idle drift (low-frequency) instead of pure jitter
+        pts.forEach((p, i) => {
+          const drift = 0.22 + 0.12 * Math.sin(t * 0.7 + i * 0.15);
+          p.add(
+            new Pt(Math.sin(t * 0.4 + i) * drift * 0.15, Math.cos(t * 0.35 + i * 0.7) * drift * 0.15)
+          );
           if (p.x < 0) p.x = space.width;
           if (p.x > space.width) p.x = 0;
           if (p.y < 0) p.y = space.height;
@@ -82,14 +94,14 @@ export function PtsLocusStage() {
           const wasClick =
             pointerDownAt && pointerDownAt.$subtract(new Pt(px, py)).magnitude() < 10;
           if (wasClick) {
-            for (let i = 0; i < 10; i++) {
+            const spawn = qualityScale(expandedRef.current, 10, 16);
+            for (let i = 0; i < spawn; i++) {
               const a = Math.random() * Math.PI * 2;
               const r = 4 + Math.random() * 28;
               pts.push(new Pt(px + Math.cos(a) * r, py + Math.sin(a) * r));
             }
-            if (pts.length > 220) {
-              pts.splice(0, pts.length - 180);
-            }
+            const cap = qualityScale(expandedRef.current, 180, 260);
+            if (pts.length > cap + 40) pts.splice(0, pts.length - cap);
           }
           wellActive = false;
           pointerDownAt = null;
@@ -103,7 +115,7 @@ export function PtsLocusStage() {
     return () => {
       space.dispose();
     };
-  }, []);
+  }, [expanded]);
 
   return <div ref={host} className="h-full w-full touch-none" />;
 }

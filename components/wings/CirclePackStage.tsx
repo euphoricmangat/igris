@@ -3,13 +3,30 @@
 import { useEffect, useRef } from "react";
 import { makeRng } from "@/lib/rng";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageToggle } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { springStep } from "@/lib/museum/spring";
+import { qualityScale } from "@/lib/museum/qualityScale";
 
-type C = { x: number; y: number; r: number; growing: boolean; c: string };
+type C = { x: number; y: number; r: number; vr: number; growing: boolean; c: string };
 
-export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
+export function CirclePackStage({
+  seed = "igris-pack",
+  expanded = false,
+  exhibitId,
+}: {
+  seed?: string;
+  expanded?: boolean;
+  exhibitId?: string;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const growingRef = useRef<C | null>(null);
   const commitRef = useRef<C | null>(null);
+  const [params, setParams] = useSeededParams(exhibitId, { pauseAuto: 0 });
+  const pauseRef = useRef(params.pauseAuto > 0.5);
+  pauseRef.current = params.pauseAuto > 0.5;
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
   useStagePointer(ref, {
     onDown: (p) => {
@@ -17,6 +34,7 @@ export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
         x: p.x,
         y: p.y,
         r: 2,
+        vr: 0,
         growing: true,
         c: ["#e8e4dc", "#b91c1c", "#71717a", "#a1a1aa", "#fafafa"][(Math.random() * 5) | 0],
       };
@@ -90,19 +108,23 @@ export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
 
       const active = growingRef.current;
       if (active) {
-        const next = { ...active, r: active.r + 0.55 };
+        const targetR = active.r + 0.9;
+        const stepped = springStep(active.r, targetR, active.vr, 0.2, 0.78);
+        const next = { ...active, r: stepped.value, vr: stepped.velocity };
         if (fits(next)) {
           active.r = next.r;
+          active.vr = next.vr;
         } else {
-          circles.push({ ...active, growing: false });
+          circles.push({ ...active, growing: false, vr: 0 });
           growingRef.current = null;
         }
-      } else {
+      } else if (!pauseRef.current) {
         for (let i = 0; i < 2; i++) {
           const nc: C = {
             x: 20 + rng() * (w - 40),
             y: 20 + rng() * (h - 40),
             r: 2,
+            vr: 0,
             growing: true,
             c: colors[(rng() * colors.length) | 0],
           };
@@ -112,10 +134,14 @@ export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
 
       for (const c of circles) {
         if (c.growing) {
-          c.r += 0.35;
-          if (!fits(c)) {
-            c.r -= 0.35;
+          const stepped = springStep(c.r, c.r + 0.55, c.vr, 0.18, 0.8);
+          const trial = { ...c, r: stepped.value };
+          if (fits(trial)) {
+            c.r = stepped.value;
+            c.vr = stepped.velocity;
+          } else {
             c.growing = false;
+            c.vr = 0;
           }
         }
         ctx.beginPath();
@@ -137,7 +163,8 @@ export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
       }
 
       ctx.globalAlpha = 1;
-      if (circles.length > 420) circles = circles.filter((c) => c.r > 6).slice(-280);
+      const cap = qualityScale(expandedRef.current, 420, 620);
+      if (circles.length > cap) circles = circles.filter((c) => c.r > 6).slice(-Math.floor(cap * 0.66));
       raf = requestAnimationFrame(frame);
     };
     frame();
@@ -146,7 +173,22 @@ export function CirclePackStage({ seed = "igris-pack" }: { seed?: string }) {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [seed]);
+  }, [seed, expanded]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-cell" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-cell" />
+      {expanded ? (
+        <StageControlStrip>
+          <StageToggle
+            label={params.pauseAuto > 0.5 ? "Auto off" : "Auto on"}
+            active={params.pauseAuto > 0.5}
+            onClick={() =>
+              setParams((p) => ({ ...p, pauseAuto: p.pauseAuto > 0.5 ? 0 : 1 }))
+            }
+          />
+        </StageControlStrip>
+      ) : null}
+    </div>
+  );
 }

@@ -4,13 +4,30 @@ import { useEffect, useRef } from "react";
 import { makeRng } from "@/lib/rng";
 import { makePerlin2D } from "@/lib/noise";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { qualityScale } from "@/lib/museum/qualityScale";
+import { idleLissajous } from "@/hooks/useIdleLissajous";
 
-export function JoyDivisionStage({ seed = "igris-horizon" }: { seed?: string }) {
+export function JoyDivisionStage({
+  seed = "igris-horizon",
+  expanded = false,
+  exhibitId,
+}: {
+  seed?: string;
+  expanded?: boolean;
+  exhibitId?: string;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const tOffset = useRef(0);
   const peakBoost = useRef(0);
   const peakX = useRef(0.5);
   const lastY = useRef<number | null>(null);
+  const [params, setParams] = useSeededParams(exhibitId, { sensitivity: 1 });
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
   const pointerRef = useStagePointer(ref, {
     onDown: (p) => {
@@ -18,10 +35,11 @@ export function JoyDivisionStage({ seed = "igris-horizon" }: { seed?: string }) 
       peakX.current = p.u;
     },
     onMove: (p) => {
+      const sens = paramsRef.current.sensitivity;
       if (p.down && lastY.current != null) {
-        tOffset.current += (p.y - lastY.current) * -0.004;
+        tOffset.current += (p.y - lastY.current) * -0.004 * sens;
         lastY.current = p.y;
-        peakBoost.current = Math.min(1.4, peakBoost.current + 0.06);
+        peakBoost.current = Math.min(1.4, peakBoost.current + 0.06 * sens);
       }
       if (p.inside) peakX.current = p.u;
     },
@@ -29,9 +47,10 @@ export function JoyDivisionStage({ seed = "igris-horizon" }: { seed?: string }) 
       lastY.current = null;
     },
     onWheel: (dy, p) => {
-      tOffset.current += dy * 0.0015;
+      const sens = paramsRef.current.sensitivity;
+      tOffset.current += dy * 0.0015 * sens;
       peakX.current = p.u;
-      peakBoost.current = Math.min(1.4, peakBoost.current + 0.12);
+      peakBoost.current = Math.min(1.4, peakBoost.current + 0.12 * sens);
     },
   });
 
@@ -61,14 +80,20 @@ export function JoyDivisionStage({ seed = "igris-horizon" }: { seed?: string }) 
     const draw = () => {
       t += 0.008;
       peakBoost.current *= 0.97;
+      const ptr = pointerRef.current;
+      if (!ptr.inside && !ptr.down) {
+        const idle = idleLissajous(t * 0.35);
+        peakX.current += (idle.u - peakX.current) * 0.02;
+        peakBoost.current = Math.max(0.12, peakBoost.current * 0.995 + 0.002);
+      }
       const time = t + tOffset.current;
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       ctx.fillStyle = "#0e0e10";
       ctx.fillRect(0, 0, w, h);
 
-      const rows = 42;
-      const cols = 120;
+      const rows = qualityScale(expandedRef.current, 36, 52);
+      const cols = qualityScale(expandedRef.current, 100, 140);
       ctx.strokeStyle = "#e8e4dc";
       ctx.lineWidth = 1.1;
       const boostX = peakX.current * w;
@@ -108,7 +133,23 @@ export function JoyDivisionStage({ seed = "igris-horizon" }: { seed?: string }) 
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [seed, pointerRef]);
+  }, [seed, pointerRef, expanded]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-ns-resize" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-ns-resize" />
+      {expanded ? (
+        <StageControlStrip>
+          <StageSlider
+            label="Sense"
+            value={params.sensitivity}
+            min={0.4}
+            max={1.8}
+            step={0.05}
+            onChange={(v) => setParams((p) => ({ ...p, sensitivity: v }))}
+          />
+        </StageControlStrip>
+      ) : null}
+    </div>
+  );
 }

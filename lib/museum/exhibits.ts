@@ -2,39 +2,39 @@ import type { Exhibit, WingId } from "./types";
 import { wings } from "./wings";
 
 export const exhibits: Exhibit[] = [
-  // ── Relief ────────────────────────────────────────
+  // ── Paradox ───────────────────────────────────────
   {
-    id: "relief-brixel",
-    wing: "relief",
-    title: "Brixel Life",
-    medium: "Conway pin relief",
+    id: "paradox-cascade",
+    wing: "paradox",
+    title: "Endless Cascade",
+    medium: "Closed water loop",
     year: "2026",
-    accession: "IGR.RLF.001",
+    accession: "IGR.PDX.001",
     blurb:
-      "A brushed-metal pin board obeying Conway’s rules — births rise, deaths sink, and your hand disturbs the field before it settles.",
-    engine: "brixel-life",
+      "Water climbs an impossible channel and falls forever — steer the join; hold to raise the flow.",
+    engine: "endless-cascade",
   },
   {
-    id: "relief-flip",
-    wing: "relief",
-    title: "Flip Field",
-    medium: "Motorized flip discs",
+    id: "paradox-tread",
+    wing: "paradox",
+    title: "Closed Tread",
+    medium: "Self-driving belt",
     year: "2026",
-    accession: "IGR.RLF.002",
+    accession: "IGR.PDX.002",
     blurb:
-      "Discs rotate with travel time and overshoot — drag a wake of flips across the board and watch them settle.",
-    engine: "flip-field",
+      "A wheel that drives itself — always turning; hold to load the belt, release and it recovers.",
+    engine: "closed-tread",
   },
   {
-    id: "relief-needles",
-    wing: "relief",
-    title: "Needle Chorus",
-    medium: "Spring needle bed",
+    id: "paradox-fountain",
+    wing: "paradox",
+    title: "Fountain Knot",
+    medium: "Returning stream",
     year: "2026",
-    accession: "IGR.RLF.003",
+    accession: "IGR.PDX.003",
     blurb:
-      "A traveling wave drives a bed of spring needles; the pointer pulls them like a magnet before they return to rhythm.",
-    engine: "needle-chorus",
+      "A stream that returns to its own source along a knot — move to coil the path; Expand densifies beads.",
+    engine: "fountain-knot",
   },
   // ── Locus ─────────────────────────────────────────
   {
@@ -105,7 +105,8 @@ export const exhibits: Exhibit[] = [
     medium: "WebGL sculpture",
     year: "2026",
     accession: "IGR.ALC.001",
-    blurb: "A slow helical ribbon of light — steel and crimson orbiting a silent core.",
+    blurb:
+      "A living crimson helix — move to coil the ribbon, hold to tighten it toward the silver core.",
     engine: "alcove-ribbon",
   },
   {
@@ -115,7 +116,8 @@ export const exhibits: Exhibit[] = [
     medium: "WebGL refraction study",
     year: "2026",
     accession: "IGR.ALC.002",
-    blurb: "Faceted glass catching gallery light; the crystal turns as if remembering a fight.",
+    blurb:
+      "Faceted transmission glass with crimson attenuation — the same crystal in the grid and in Expand; Expand only deepens the refraction.",
     engine: "alcove-crystal",
   },
   {
@@ -177,10 +179,11 @@ export const exhibits: Exhibit[] = [
     id: "signal-pulse",
     wing: "signal",
     title: "Monarch Pulse",
-    medium: "WebGPU fragment pulse",
+    medium: "Spektral / Canvas pulse",
     year: "2026",
     accession: "IGR.SIG.002",
-    blurb: "A full-frame WGSL heartbeat — crimson rings bloom and collapse on the GPU.",
+    blurb:
+      "Crimson rings bloom from the pointer — WebGPU Spektral when available, Canvas pulse otherwise.",
     engine: "spektral-pulse",
   },
   {
@@ -237,14 +240,92 @@ export const exhibits: Exhibit[] = [
       "A double pendulum sheds ember sand into an accumulating drawing — pluck it; watch the floor remember.",
     engine: "sand-pendulum",
   },
+  // ── Atelier annex (Index only — not corridor wing doors) ──
+  {
+    id: "archive-ember",
+    wing: "forge",
+    title: "Ember Register",
+    medium: "Atelier filmstrip plate",
+    year: "2026",
+    accession: "IGR.ANN.001",
+    blurb:
+      "Sixteen ember comic plates baked offline by the Python atelier — scrub the register; nothing scraped.",
+    engine: "archive-plates",
+    archive: "reel-ember",
+  },
+  {
+    id: "archive-nocturne",
+    wing: "forge",
+    title: "Nocturne Cut",
+    medium: "Atelier filmstrip plate",
+    year: "2026",
+    accession: "IGR.ANN.002",
+    blurb:
+      "A night-mood filmstrip from the atelier — dense ink panels for study, not a live wing.",
+    engine: "archive-plates",
+    archive: "reel-nocturne",
+  },
+  {
+    id: "archive-mill",
+    wing: "forge",
+    title: "Mill Room",
+    medium: "Atelier overlay plate",
+    year: "2026",
+    accession: "IGR.ANN.003",
+    blurb:
+      "Layered color fields and halftone — overlay mill plates for the research annex.",
+    engine: "archive-plates",
+    archive: "overlay-mill",
+  },
+  {
+    id: "archive-sprocket",
+    wing: "forge",
+    title: "Sprocket Opera",
+    medium: "Atelier filmstrip plate",
+    year: "2026",
+    accession: "IGR.ANN.004",
+    blurb:
+      "Day-mood comic cells on a sprocket reel — baked offline, scrubbed like a register.",
+    engine: "archive-plates",
+    archive: "reel-sprocket-01",
+  },
+  {
+    id: "archive-halide",
+    wing: "forge",
+    title: "Halide Chamber",
+    medium: "Atelier overlay plate",
+    year: "2026",
+    accession: "IGR.ANN.005",
+    blurb:
+      "Steel, crimson, and ash overlays with grain — halide study plates for the annex.",
+    engine: "archive-plates",
+    archive: "overlay-halide",
+  },
+  {
+    id: "archive-cinder",
+    wing: "forge",
+    title: "Cinder Press",
+    medium: "Atelier overlay plate",
+    year: "2026",
+    accession: "IGR.ANN.006",
+    blurb:
+      "Heavy grain and halftone stacked as a press-room memory — not a live engine.",
+    engine: "archive-plates",
+    archive: "overlay-cinder",
+  },
 ];
 
 export function getExhibit(id: string): Exhibit | undefined {
   return exhibits.find((e) => e.id === id);
 }
 
+/** Wing grids exclude atelier annex plates (they live on Index). */
 export function exhibitsByWing(wing: WingId): Exhibit[] {
-  return exhibits.filter((e) => e.wing === wing);
+  return exhibits.filter((e) => e.wing === wing && e.engine !== "archive-plates");
+}
+
+export function annexExhibits(): Exhibit[] {
+  return exhibits.filter((e) => e.engine === "archive-plates");
 }
 
 export { wings };

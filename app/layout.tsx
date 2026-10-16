@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s · Igris",
   },
   description:
-    "Igris is a spatial digital museum of filmstrip mashups, generative loci, WebGL alcoves, composite labs, and kinetic signals.",
+    "Igris is a spatial digital museum of paradoxical machines, generative loci, WebGL alcoves, living fields, signal systems, and forge sculpture.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

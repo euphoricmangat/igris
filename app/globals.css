@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --concrete: #a8a49c;
-  --concrete-deep: #8e959a;
-  --plaster: #c4bfb5;
-  --ink: #0e0e10;
-  --ink-soft: #4a4742;
-  --line: rgba(14, 14, 16, 0.18);
-  --line-strong: rgba(14, 14, 16, 0.35);
+  /* Nocturne vault */
+  --void: #0a0a0c;
+  --void-lift: #121218;
+  --beam: #e8e4dc;
+  --ink: #e8e4dc;
+  --ink-soft: rgba(232, 228, 220, 0.62);
+  --line: rgba(232, 228, 220, 0.14);
+  --line-strong: rgba(232, 228, 220, 0.28);
   --accent: #b91c1c;
   --accent-soft: #dc2626;
-  --steel: #d4d4d8;
+  --steel: #a8a49c;
   --paper: #e8e4dc;
+  --concrete: #2a2a30;
+  --plaster: #16161c;
 }
 
 @theme inline {
@@ -36,14 +39,25 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(1200px 700px at 15% -10%, rgba(185, 28, 28, 0.12), transparent 55%),
-    radial-gradient(900px 600px at 90% 20%, rgba(142, 149, 154, 0.45), transparent 50%),
-    linear-gradient(165deg, var(--plaster) 0%, var(--concrete) 48%, var(--concrete-deep) 100%);
+    radial-gradient(900px 500px at 12% -5%, rgba(185, 28, 28, 0.14), transparent 55%),
+    radial-gradient(700px 480px at 88% 8%, rgba(232, 228, 220, 0.06), transparent 50%),
+    linear-gradient(168deg, var(--void-lift) 0%, var(--void) 45%, #08080a 100%);
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-dm), system-ui, sans-serif;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
 
 h1,
@@ -85,37 +99,53 @@ a {
   padding-top: 1rem;
 }
 
+/* Corridor thresholds — luminous doors */
 .door {
   position: relative;
   display: block;
-  min-height: 280px;
+  min-height: 300px;
   padding: 1.75rem;
   border: 1px solid var(--line);
-  background: rgba(232, 228, 220, 0.35);
-  backdrop-filter: blur(8px);
+  background:
+    linear-gradient(165deg, rgba(232, 228, 220, 0.06) 0%, rgba(14, 14, 16, 0.55) 100%);
+  backdrop-filter: blur(10px);
   transition:
-    border-color 0.35s ease,
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.35s ease;
+    border-color 0.4s ease,
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
 }
 
 .door:hover {
-  border-color: var(--accent);
-  background: rgba(232, 228, 220, 0.55);
-  transform: translateY(-4px);
+  border-color: rgba(185, 28, 28, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(185, 28, 28, 0.2),
+    0 24px 48px rgba(0, 0, 0, 0.45);
+  transform: translateY(-3px);
+}
+
+.door::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
 }
 
 .door::after {
   content: "";
   position: absolute;
   inset: auto 1.25rem 1.25rem auto;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  opacity: 0.85;
+  box-shadow: 0 0 12px rgba(185, 28, 28, 0.7);
+  opacity: 0.9;
 }
 
+/* Vault aperture for sculpture thumbs */
 .stage-frame {
   position: relative;
   width: 100%;
@@ -123,6 +153,19 @@ a {
   overflow: hidden;
   border: 1px solid var(--line-strong);
   background: #0e0e10;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    inset 0 40px 80px rgba(0, 0, 0, 0.35),
+    0 0 40px rgba(0, 0, 0, 0.25);
+}
+
+.stage-frame::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45);
+  z-index: 2;
 }
 
 .stage-frame > .stage-host,
@@ -131,6 +174,7 @@ a {
   height: 100% !important;
   display: block;
   position: relative;
+  z-index: 1;
 }
 
 .stage-frame .stage-host canvas,
@@ -142,8 +186,8 @@ a {
 
 @keyframes rise {
   from {
-    opacity: 0.55;
-    transform: translateY(8px);
+    opacity: 0.45;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -153,8 +197,8 @@ a {
 
 @keyframes page-in {
   from {
-    opacity: 0.72;
-    transform: translateY(6px);
+    opacity: 0.65;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -163,11 +207,11 @@ a {
 }
 
 .animate-rise {
-  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-page-in {
-  animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes sprocket-drift {
@@ -180,13 +224,33 @@ a {
 }
 
 .sprocket-rail {
-  animation: sprocket-drift 8s linear infinite;
+  animation: sprocket-drift 10s linear infinite;
+  opacity: 0.55;
+}
+
+@keyframes door-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.door-beam {
+  animation: door-breathe 4.5s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-page-in,
-  .sprocket-rail {
+  .sprocket-rail,
+  .door-beam {
     animation: none;
+  }
+
+  body::before {
+    display: none;
   }
 }

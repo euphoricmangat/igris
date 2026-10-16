@@ -2,15 +2,30 @@
 
 import { useEffect, useRef } from "react";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { qualityScale } from "@/lib/museum/qualityScale";
 import { springStep } from "@/lib/museum/spring";
 
 /** Eccentric cam press — spring stamp leaving glowing ink. */
-export function CamPressStage() {
+export function CamPressStage({
+  exhibitId,
+  expanded = false,
+}: {
+  exhibitId?: string;
+  expanded?: boolean;
+} = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const inkRef = useRef(0);
+  const [params, setParams] = useSeededParams(exhibitId, { speed: 1, ink: 0 });
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+  inkRef.current = Math.round(params.ink) % 4;
   const pointerRef = useStagePointer(ref, {
     onClick: () => {
-      inkRef.current = (inkRef.current + 1) % 4;
+      const next = (inkRef.current + 1) % 4;
+      inkRef.current = next;
+      setParams((p) => ({ ...p, ink: next }));
     },
   });
 
@@ -38,7 +53,7 @@ export function CamPressStage() {
     const resize = () => {
       w = parent?.clientWidth || 800;
       h = parent?.clientHeight || 500;
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, qualityScale(expanded, 1.75, 2));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -57,9 +72,11 @@ export function CamPressStage() {
     };
     resize();
 
+    const stampScale = qualityScale(expanded, 1, 1.4);
+
     const frame = () => {
       const ptr = pointerRef.current;
-      const rush = ptr.down && ptr.inside ? 2.6 : 1;
+      const rush = (ptr.down && ptr.inside ? 2.6 : 1) * paramsRef.current.speed;
       angle += 0.035 * rush;
 
       const cam = Math.sin(angle);
@@ -73,23 +90,27 @@ export function CamPressStage() {
       if (impactPhase !== lastImpact && cam < -0.92) {
         lastImpact = impactPhase;
         glow = 1;
-        const cx = w * 0.5 + Math.sin(angle * 0.5) * w * 0.12;
+        const steer = ptr.inside ? (ptr.u - 0.5) * w * 0.28 : 0;
+        const cx = w * 0.5 + Math.sin(angle * 0.5) * w * 0.12 + steer;
         const cy = h * 0.62 + headY * 0.15;
         const ink = inks[inkRef.current];
+        const rx = (18 + Math.random() * 10) * stampScale;
+        const ry = (10 + Math.random() * 6) * stampScale;
+        const bloomR = 36 * stampScale;
         pctx.save();
         pctx.globalAlpha = 0.55;
         pctx.fillStyle = ink;
         pctx.beginPath();
-        pctx.ellipse(cx, cy, 18 + Math.random() * 10, 10 + Math.random() * 6, angle * 0.2, 0, Math.PI * 2);
+        pctx.ellipse(cx, cy, rx, ry, angle * 0.2, 0, Math.PI * 2);
         pctx.fill();
         // Soft bloom stamp
-        const g = pctx.createRadialGradient(cx, cy, 2, cx, cy, 36);
+        const g = pctx.createRadialGradient(cx, cy, 2, cx, cy, bloomR);
         g.addColorStop(0, ink);
         g.addColorStop(1, "rgba(14,14,16,0)");
         pctx.globalAlpha = 0.28;
         pctx.fillStyle = g;
         pctx.beginPath();
-        pctx.arc(cx, cy, 36, 0, Math.PI * 2);
+        pctx.arc(cx, cy, bloomR, 0, Math.PI * 2);
         pctx.fill();
         pctx.restore();
       }
@@ -166,7 +187,29 @@ export function CamPressStage() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [pointerRef]);
+  }, [pointerRef, expanded]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />
+      <StageControlStrip>
+        <StageSlider
+          label="Speed"
+          value={params.speed}
+          min={0.5}
+          max={2.2}
+          step={0.05}
+          onChange={(v) => setParams((p) => ({ ...p, speed: v }))}
+        />
+        <StageSlider
+          label="Ink"
+          value={params.ink}
+          min={0}
+          max={3}
+          step={1}
+          onChange={(v) => setParams((p) => ({ ...p, ink: v }))}
+        />
+      </StageControlStrip>
+    </div>
+  );
 }

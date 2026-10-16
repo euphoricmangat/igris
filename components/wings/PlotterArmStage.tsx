@@ -2,11 +2,32 @@
 
 import { useEffect, useRef } from "react";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { qualityScale } from "@/lib/museum/qualityScale";
 
 /** Two-joint ink arm that never stops writing — art accumulates on the plate. */
-export function PlotterArmStage() {
+export function PlotterArmStage({
+  exhibitId,
+  expanded = false,
+}: {
+  exhibitId?: string;
+  expanded?: boolean;
+} = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const pointerRef = useStagePointer(ref);
+  const clearPlate = useRef(false);
+  const lastClick = useRef(0);
+  const [params, setParams] = useSeededParams(exhibitId, { inkWeight: 1, ambient: 1 });
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+
+  const pointerRef = useStagePointer(ref, {
+    onClick: () => {
+      const now = performance.now();
+      if (now - lastClick.current < 380) clearPlate.current = true;
+      lastClick.current = now;
+    },
+  });
 
   useEffect(() => {
     const canvas = ref.current;
@@ -29,7 +50,7 @@ export function PlotterArmStage() {
     const resize = () => {
       w = parent?.clientWidth || 800;
       h = parent?.clientHeight || 500;
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, qualityScale(expanded, 1.75, 2));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -53,15 +74,23 @@ export function PlotterArmStage() {
     const L1 = () => Math.min(w, h) * 0.28;
     const L2 = () => Math.min(w, h) * 0.34;
     const origin = () => ({ x: w * 0.5, y: h * 0.12 });
+    const inkScale = qualityScale(expanded, 1, 1.45);
 
     const frame = () => {
-      t += 0.016;
+      if (clearPlate.current) {
+        clearPlate.current = false;
+        pctx.fillStyle = "#0e0e10";
+        pctx.fillRect(0, 0, w, h);
+        last = null;
+      }
+
+      const ambient = paramsRef.current.ambient;
+      t += 0.016 * ambient;
       const ptr = pointerRef.current;
       const o = origin();
       const l1 = L1();
       const l2 = L2();
 
-      // Ambient Lissajous target, steered by pointer
       let tx = w * 0.5 + Math.sin(t * 0.55) * w * 0.28 + Math.sin(t * 0.19) * w * 0.08;
       let ty = h * 0.55 + Math.cos(t * 0.41) * h * 0.22 + Math.sin(t * 0.27) * h * 0.06;
       if (ptr.inside) {
@@ -70,7 +99,6 @@ export function PlotterArmStage() {
         ty = ty * (1 - blend) + ptr.y * blend;
       }
 
-      // Inverse kinematics for 2-link arm
       const dx = tx - o.x;
       const dy = ty - o.y;
       const dist = Math.min(Math.hypot(dx, dy), l1 + l2 - 1);
@@ -78,8 +106,7 @@ export function PlotterArmStage() {
       const cosA2 = (reach * reach - l1 * l1 - l2 * l2) / (2 * l1 * l2);
       const a2 = Math.acos(Math.max(-1, Math.min(1, cosA2)));
       const a1 =
-        Math.atan2(dy, dx) -
-        Math.atan2(l2 * Math.sin(a2), l1 + l2 * Math.cos(a2));
+        Math.atan2(dy, dx) - Math.atan2(l2 * Math.sin(a2), l1 + l2 * Math.cos(a2));
 
       const e = { x: o.x + Math.cos(a1) * l1, y: o.y + Math.sin(a1) * l1 };
       const tip = {
@@ -87,8 +114,8 @@ export function PlotterArmStage() {
         y: e.y + Math.sin(a1 + a2) * l2,
       };
 
-      // Ink onto plate
-      const press = ptr.down ? 2.4 : 1.15;
+      const weight = paramsRef.current.inkWeight;
+      const press = (ptr.down ? 2.4 : 1.15) * weight * inkScale;
       if (last) {
         const speed = Math.hypot(tip.x - last.x, tip.y - last.y);
         pctx.strokeStyle = ink % 3 === 0 ? "#b91c1c" : ink % 3 === 1 ? "#e8e4dc" : "#71717a";
@@ -105,21 +132,17 @@ export function PlotterArmStage() {
       last = tip;
       if (ptr.down && Math.random() < 0.02) ink++;
 
-      // Composite: plate + machine chrome
       ctx.drawImage(plate, 0, 0, w, h);
 
-      // Paper margin ring
       ctx.strokeStyle = "rgba(232,228,220,0.08)";
       ctx.lineWidth = 1;
       ctx.strokeRect(18, 18, w - 36, h - 36);
 
-      // Mount plate
       ctx.fillStyle = "#1a1816";
       ctx.fillRect(o.x - 28, 4, 56, 18);
       ctx.strokeStyle = "rgba(168,164,156,0.45)";
       ctx.strokeRect(o.x - 28, 4, 56, 18);
 
-      // Arms
       ctx.strokeStyle = "#a8a49c";
       ctx.lineWidth = 5;
       ctx.lineCap = "round";
@@ -137,7 +160,6 @@ export function PlotterArmStage() {
       ctx.lineTo(tip.x, tip.y);
       ctx.stroke();
 
-      // Joints
       for (const j of [o, e]) {
         ctx.beginPath();
         ctx.arc(j.x, j.y, 6, 0, Math.PI * 2);
@@ -148,13 +170,11 @@ export function PlotterArmStage() {
         ctx.stroke();
       }
 
-      // Nib
       ctx.beginPath();
       ctx.arc(tip.x, tip.y, ptr.down ? 4.5 : 3.2, 0, Math.PI * 2);
       ctx.fillStyle = "#b91c1c";
       ctx.fill();
 
-      // Cable from mount
       ctx.strokeStyle = "rgba(113,113,122,0.35)";
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -171,7 +191,32 @@ export function PlotterArmStage() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [pointerRef]);
+  }, [pointerRef, expanded]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />
+      <StageControlStrip>
+        <StageSlider
+          label="Ink"
+          value={params.inkWeight}
+          min={0.5}
+          max={2}
+          step={0.05}
+          onChange={(v) => setParams((p) => ({ ...p, inkWeight: v }))}
+        />
+        <StageSlider
+          label="Ambient"
+          value={params.ambient}
+          min={0.4}
+          max={1.8}
+          step={0.05}
+          onChange={(v) => setParams((p) => ({ ...p, ambient: v }))}
+        />
+        <p className="pointer-events-none accession text-[rgba(232,228,220,0.45)]">
+          Double-click clears
+        </p>
+      </StageControlStrip>
+    </div>
+  );
 }

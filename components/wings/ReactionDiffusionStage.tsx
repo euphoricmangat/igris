@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { idleLissajousPx } from "@/hooks/useIdleLissajous";
+import { qualityScale } from "@/lib/museum/qualityScale";
 
 /** Gray-Scott style reaction–diffusion wall piece. */
-export function ReactionDiffusionStage() {
+export function ReactionDiffusionStage({
+  exhibitId,
+  expanded = false,
+}: {
+  exhibitId?: string;
+  expanded?: boolean;
+} = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const [feed, setFeed] = useState(0.036);
-  const [kill, setKill] = useState(0.06);
+  const [params, setParams] = useSeededParams(exhibitId, { feed: 0.036, kill: 0.06 });
+  const { feed, kill } = params;
+  const setFeed = (v: number) => setParams((p) => ({ ...p, feed: v }));
+  const setKill = (v: number) => setParams((p) => ({ ...p, kill: v }));
   const paramsRef = useRef({ feed, kill });
   paramsRef.current = { feed, kill };
 
@@ -20,8 +32,8 @@ export function ReactionDiffusionStage() {
     if (!ctx) return;
     const parent = canvas.parentElement;
 
-    const cols = 160;
-    const rows = 100;
+    const cols = Math.round(qualityScale(expanded, 160, 240));
+    const rows = Math.round(qualityScale(expanded, 100, 150));
     let A = new Float32Array(cols * rows);
     let B = new Float32Array(cols * rows);
     let nA = new Float32Array(cols * rows);
@@ -102,10 +114,18 @@ export function ReactionDiffusionStage() {
       }
     };
 
+    let idleT = 0;
+    let frames = 0;
     const frame = () => {
+      frames++;
+      idleT += 0.016;
       const { feed: f, kill: k } = paramsRef.current;
       const ptr = pointerRef.current;
       if (ptr.down && ptr.inside) paintAt(ptr.x, ptr.y);
+      else if (frames % 180 === 0) {
+        const idle = idleLissajousPx(idleT, canvas.clientWidth, canvas.clientHeight);
+        paintAt(idle.x, idle.y);
+      }
 
       for (let step = 0; step < 2; step++) {
         for (let y = 0; y < rows; y++) {
@@ -146,37 +166,29 @@ export function ReactionDiffusionStage() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [pointerRef]);
+  }, [pointerRef, expanded]);
 
   return (
     <div className="relative h-full w-full">
       <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />
-      <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center gap-3">
-        <label className="accession flex flex-1 items-center gap-2 text-[var(--paper)]">
-          F
-          <input
-            type="range"
-            min={0.02}
-            max={0.06}
-            step={0.001}
-            value={feed}
-            onChange={(e) => setFeed(Number(e.target.value))}
-            className="w-full accent-[var(--accent)]"
-          />
-        </label>
-        <label className="accession flex flex-1 items-center gap-2 text-[var(--paper)]">
-          K
-          <input
-            type="range"
-            min={0.045}
-            max={0.07}
-            step={0.001}
-            value={kill}
-            onChange={(e) => setKill(Number(e.target.value))}
-            className="w-full accent-[var(--accent)]"
-          />
-        </label>
-      </div>
+      <StageControlStrip>
+        <StageSlider
+          label="F"
+          value={feed}
+          min={0.02}
+          max={0.06}
+          step={0.001}
+          onChange={setFeed}
+        />
+        <StageSlider
+          label="K"
+          value={kill}
+          min={0.045}
+          max={0.07}
+          step={0.001}
+          onChange={setKill}
+        />
+      </StageControlStrip>
     </div>
   );
 }

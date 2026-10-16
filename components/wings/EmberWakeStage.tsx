@@ -2,13 +2,29 @@
 
 import { useEffect, useRef } from "react";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { useSeededParams } from "@/hooks/useSeededParams";
 
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; hue: number };
 
-/** Additive ember wake that trails the pointer. */
-export function EmberWakeStage() {
+/** Additive ember wake — idle Lissajous trail so wing thumbs stay alive without pointer. */
+export function EmberWakeStage({
+  exhibitId,
+  expanded = false,
+}: {
+  exhibitId?: string;
+  expanded?: boolean;
+} = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const pointerRef = useStagePointer(ref);
+  const [params, setParams] = useSeededParams(exhibitId, { linger: 0.012, spawn: 1 });
+  const { linger, spawn } = params;
+  const setLinger = (v: number) => setParams((p) => ({ ...p, linger: v }));
+  const setSpawn = (v: number) => setParams((p) => ({ ...p, spawn: v }));
+  const paramsRef = useRef({ linger, spawn });
+  paramsRef.current = { linger, spawn };
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -18,6 +34,7 @@ export function EmberWakeStage() {
     const parent = canvas.parentElement;
     const particles: Particle[] = [];
     let raf = 0;
+    let t = 0;
     let prevX = 0;
     let prevY = 0;
     let hasPrev = false;
@@ -34,8 +51,9 @@ export function EmberWakeStage() {
     };
     resize();
 
-    const spawn = (x: number, y: number, speed: number) => {
-      const n = 2 + Math.min(8, Math.floor(speed * 0.4));
+    const spawnAt = (x: number, y: number, speed: number) => {
+      const mult = paramsRef.current.spawn * (expandedRef.current ? 1.35 : 1);
+      const n = Math.floor((2 + Math.min(8, Math.floor(speed * 0.4))) * mult);
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;
         const s = 0.4 + Math.random() * 1.8;
@@ -48,10 +66,13 @@ export function EmberWakeStage() {
           hue: Math.random() > 0.7 ? 0 : 12,
         });
       }
-      if (particles.length > 900) particles.splice(0, particles.length - 700);
+      const area = canvas.clientWidth * canvas.clientHeight;
+      const cap = Math.min(1400, Math.max(400, Math.floor(area / 900) * (expandedRef.current ? 1.4 : 1)));
+      if (particles.length > cap) particles.splice(0, particles.length - Math.floor(cap * 0.78));
     };
 
     const frame = () => {
+      t += 0.016;
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       const ptr = pointerRef.current;
@@ -63,14 +84,18 @@ export function EmberWakeStage() {
         const dx = hasPrev ? ptr.x - prevX : 0;
         const dy = hasPrev ? ptr.y - prevY : 0;
         const speed = Math.hypot(dx, dy);
-        spawn(ptr.x, ptr.y, speed + (ptr.down ? 6 : 1.5));
+        spawnAt(ptr.x, ptr.y, speed + (ptr.down ? 6 : 1.5));
         prevX = ptr.x;
         prevY = ptr.y;
         hasPrev = true;
       } else {
         hasPrev = false;
+        const cx = w * 0.5 + Math.sin(t * 0.55) * w * 0.28;
+        const cy = h * 0.48 + Math.sin(t * 0.85 + 1.2) * h * 0.22;
+        spawnAt(cx, cy, 2.2);
       }
 
+      const lifeStep = paramsRef.current.linger;
       ctx.globalCompositeOperation = "lighter";
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
@@ -78,7 +103,7 @@ export function EmberWakeStage() {
         p.y += p.vy;
         p.vx *= 0.98;
         p.vy = p.vy * 0.98 - 0.01;
-        p.life -= 0.012;
+        p.life -= lifeStep;
         if (p.life <= 0) {
           particles.splice(i, 1);
           continue;
@@ -106,5 +131,20 @@ export function EmberWakeStage() {
     };
   }, [pointerRef]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />
+      <StageControlStrip>
+        <StageSlider
+          label="Linger"
+          value={linger}
+          min={0.006}
+          max={0.024}
+          step={0.001}
+          onChange={setLinger}
+        />
+        <StageSlider label="Spawn" value={spawn} min={0.4} max={2.2} step={0.1} onChange={setSpawn} />
+      </StageControlStrip>
+    </div>
+  );
 }

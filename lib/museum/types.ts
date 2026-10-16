@@ -1,9 +1,9 @@
-export type WingId = "relief" | "locus" | "alcove" | "field" | "signal" | "forge";
+export type WingId = "paradox" | "locus" | "alcove" | "field" | "signal" | "forge";
 
 export type EngineKind =
-  | "brixel-life"
-  | "flip-field"
-  | "needle-chorus"
+  | "endless-cascade"
+  | "closed-tread"
+  | "fountain-knot"
   | "pts-locus"
   | "flow-field"
   | "joy-division"
@@ -22,7 +22,8 @@ export type EngineKind =
   | "meteor"
   | "plotter-arm"
   | "cam-press"
-  | "sand-pendulum";
+  | "sand-pendulum"
+  | "archive-plates";
 
 export interface Exhibit {
   id: string;
@@ -42,4 +43,6 @@ export interface WingMeta {
   title: string;
   subtitle: string;
   medium: string;
+  /** Short visitor orientation for corridor / wing intro */
+  blurb: string;
 }

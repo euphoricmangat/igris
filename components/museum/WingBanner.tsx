@@ -8,7 +8,7 @@ import type { WingId } from "@/lib/museum/types";
  * Values are RGB triples for rgba() compositing on the warm museum ground.
  */
 const PALETTE: Record<WingId, { ink: string; rust: string; stone: string }> = {
-  relief: { ink: "28,26,24", rust: "140,38,36", stone: "74,70,64" },
+  paradox: { ink: "26,28,32", rust: "36,90,140", stone: "64,70,78" },
   locus: { ink: "26,26,28", rust: "148,42,40", stone: "70,68,72" },
   alcove: { ink: "30,28,26", rust: "132,36,36", stone: "68,64,60" },
   field: { ink: "28,26,24", rust: "150,44,40", stone: "72,68,62" },

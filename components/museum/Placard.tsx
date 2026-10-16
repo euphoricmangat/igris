@@ -1,46 +1,47 @@
-"use client";
-
-import { motion, useReducedMotion } from "framer-motion";
 import type { Exhibit } from "@/lib/museum/types";
+import { getResearch } from "@/lib/museum/research";
+import { SeedCapture } from "./SeedCapture";
 
+/** Server-safe placard — CSS rise stagger, no Framer (avoids hydration mismatch). */
 export function Placard({ exhibit }: { exhibit: Exhibit }) {
-  const reduce = useReducedMotion();
-  const item = {
-    hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 },
-  };
+  const research = getResearch(exhibit.engine);
 
   return (
-    <motion.aside
-      className="placard max-w-md"
-      initial="hidden"
-      animate="show"
-      transition={{ staggerChildren: reduce ? 0 : 0.07, delayChildren: reduce ? 0 : 0.05 }}
-    >
-      <motion.p className="accession" variants={item} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-        {exhibit.accession}
-      </motion.p>
-      <motion.h2
-        className="mt-2 text-2xl md:text-3xl"
-        variants={item}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
+    <aside className="placard max-w-md">
+      <p className="accession animate-rise">{exhibit.accession}</p>
+      <h2 className="mt-2 animate-rise text-2xl md:text-3xl" style={{ animationDelay: "70ms" }}>
         {exhibit.title}
-      </motion.h2>
-      <motion.p
-        className="mt-1 text-sm text-[var(--ink-soft)]"
-        variants={item}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      </h2>
+      <p
+        className="mt-1 animate-rise text-sm text-[var(--ink-soft)]"
+        style={{ animationDelay: "140ms" }}
       >
         {exhibit.medium} · {exhibit.year}
-      </motion.p>
-      <motion.p
-        className="mt-4 text-[15px] leading-relaxed text-[var(--ink-soft)]"
-        variants={item}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      </p>
+      <p
+        className="mt-4 animate-rise text-[15px] leading-relaxed text-[var(--ink-soft)]"
+        style={{ animationDelay: "210ms" }}
       >
         {exhibit.blurb}
-      </motion.p>
-    </motion.aside>
+      </p>
+
+      <div
+        className="animate-rise mt-6 space-y-3 border-t border-[var(--line)] pt-4"
+        style={{ animationDelay: "280ms" }}
+      >
+        <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.18em] text-[var(--ink)]">
+          Research
+        </p>
+        <p className="text-[13px] leading-relaxed text-[var(--ink-soft)]">{research.citation}</p>
+        <p className="text-[13px] leading-relaxed text-[var(--ink-soft)]">
+          <span className="text-[var(--ink)]">Interact · </span>
+          {research.grammar}
+        </p>
+      </div>
+
+      <div className="animate-rise" style={{ animationDelay: "340ms" }}>
+        <SeedCapture exhibit={exhibit} />
+      </div>
+    </aside>
   );
 }

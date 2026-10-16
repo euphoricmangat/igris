@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { makeRng } from "@/lib/rng";
 import { useStagePointer } from "@/components/museum/useStagePointer";
+import { StageControlStrip, StageSlider } from "@/components/museum/StageControls";
+import { idleLissajousPx } from "@/hooks/useIdleLissajous";
+import { useSeededParams } from "@/hooks/useSeededParams";
+import { qualityScale } from "@/lib/museum/qualityScale";
 
 /** Double pendulum shedding ember sand — glowing tip, bloom floor, steel rods. */
-export function SandPendulumStage() {
+export function SandPendulumStage({
+  exhibitId,
+  expanded = false,
+}: {
+  exhibitId?: string;
+  expanded?: boolean;
+} = {}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const clearRef = useRef(false);
+  const [params, setParams] = useSeededParams(exhibitId, { damp: 0.9994, sand: 1 });
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
   const pointerRef = useStagePointer(ref, {
     onClick: () => {
       clearRef.current = true;
@@ -30,11 +44,13 @@ export function SandPendulumStage() {
     let w = 800;
     let h = 500;
     let raf = 0;
+    let t = 0;
 
-    let a1 = Math.PI * 0.65;
-    let a2 = Math.PI * 0.35;
-    let v1 = 0;
-    let v2 = 0;
+    const rng = makeRng(exhibitId ?? "sand-pendulum");
+    let a1 = Math.PI * (0.45 + rng() * 0.4);
+    let a2 = Math.PI * (0.2 + rng() * 0.45);
+    let v1 = (rng() - 0.5) * 0.08;
+    let v2 = (rng() - 0.5) * 0.08;
     const g = 0.85;
     const m1 = 1.1;
     const m2 = 1;
@@ -44,7 +60,7 @@ export function SandPendulumStage() {
     const resize = () => {
       w = parent?.clientWidth || 800;
       h = parent?.clientHeight || 500;
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const dpr = Math.min(devicePixelRatio || 1, qualityScale(expanded, 1.75, 2));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -93,12 +109,14 @@ export function SandPendulumStage() {
         v2 += aa2 * dt;
         a1 += v1 * dt;
         a2 += v2 * dt;
-        v1 *= 0.9994;
-        v2 *= 0.9994;
+        const d = paramsRef.current.damp;
+        v1 *= d;
+        v2 *= d;
       }
     };
 
     const frame = () => {
+      t += 0.016;
       const ptr = pointerRef.current;
       const p = pivot();
       const l1 = L1();
@@ -123,6 +141,13 @@ export function SandPendulumStage() {
         v2 += (Math.atan2(ptr.x - x1, ptr.y - y1 + 1) - a2) * 0.006;
         v1 += dx * 0.00002;
         v2 += dy * 0.00003;
+      } else if (!ptr.inside) {
+        // Gentle idle Lissajous drive so small canvases don't settle dull
+        const idle = idleLissajousPx(t * 0.4, w, h);
+        const x1 = p.x + Math.sin(a1) * l1;
+        const y1 = p.y + Math.cos(a1) * l1;
+        v1 += (Math.atan2(idle.x - x1, idle.y - y1 + 1) - a1) * 0.0008;
+        v2 += (Math.atan2(idle.x - x1, idle.y - y1 + 1) - a2) * 0.001;
       }
 
       if (Math.hypot(v1, v2) < 0.08) {
@@ -138,7 +163,11 @@ export function SandPendulumStage() {
       const y2 = y1 + Math.cos(a2) * l2;
 
       const speed = Math.hypot(v1 * l1, v2 * l2);
-      const grains = 1 + Math.min(5, Math.floor(speed * 9));
+      const grainCap = qualityScale(expanded, 5, 9);
+      const sand = paramsRef.current.sand;
+      const grains =
+        1 +
+        Math.min(grainCap, Math.floor(speed * qualityScale(expanded, 9, 14) * sand));
       for (let i = 0; i < grains; i++) {
         const jx = x2 + (Math.random() - 0.5) * 2.8;
         const jy = y2 + (Math.random() - 0.5) * 2.8;
@@ -260,7 +289,29 @@ export function SandPendulumStage() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [pointerRef]);
+  }, [pointerRef, exhibitId, expanded]);
 
-  return <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />;
+  return (
+    <div className="absolute inset-0 h-full w-full bg-[#0e0e10]">
+      <canvas ref={ref} className="h-full w-full touch-none cursor-crosshair" />
+      <StageControlStrip>
+        <StageSlider
+          label="Damp"
+          value={params.damp}
+          min={0.997}
+          max={0.9998}
+          step={0.0001}
+          onChange={(v) => setParams((p) => ({ ...p, damp: v }))}
+        />
+        <StageSlider
+          label="Sand"
+          value={params.sand}
+          min={0.3}
+          max={2}
+          step={0.05}
+          onChange={(v) => setParams((p) => ({ ...p, sand: v }))}
+        />
+      </StageControlStrip>
+    </div>
+  );
 }
