@@ -2,7 +2,7 @@
 
 A nocturne vault of living sculpture — six wings in the browser, plus an offline atelier of baked plates.
 
-The shell is ahead of the engines. Another AI should start at [docs/README.md](docs/README.md), then [docs/HANDOFF.md](docs/HANDOFF.md).
+The shell is ahead of the engines. Give the next AI [docs/IGRIS.md](docs/IGRIS.md) — the whole brief in one file.
 
 ## Develop
 

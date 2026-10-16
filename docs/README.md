@@ -2,7 +2,7 @@
 
 Igris is a nocturne vault of living sculpture in the browser: six wings of generative engines, a shader lobby curtain, and an offline atelier of baked plates. The shell (routes, tokens, Expand chrome) is ahead of most engines. Many live works still read as basic canvas demos next to the Alcove sculptures.
 
-This pack is written for another AI that will own the next refinement pass. Read in this order.
+The full brief is one file: [IGRIS.md](IGRIS.md). Hand that to the next AI. The pages below are the same text split apart. Read in this order.
 
 | Order | Doc | Use it for |
 |------:|-----|------------|
